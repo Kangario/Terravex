@@ -13,7 +13,7 @@ class TERRAVEX_API USignIn : public UObject
 {
 	GENERATED_BODY()
 public:
-	UFUNCTION(BlueprintCallable, Category="Auth")
+	UFUNCTION(BlueprintCallable, Category="GoogleAuth")
 	void LoginUser(FString Username, FString Password);
 
 private:

@@ -14,9 +14,20 @@ public class Terravex : ModuleRules
 			"EnhancedInput", 
 			"Http", 
 			"Json", 
-			"JsonUtilities" });
+			"UMG",
+			"JsonUtilities", "OnlineSubsystem"
+		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"OnlineSubsystem", 
+			"OnlineSubsystemUtils"
+		});
 		
+		if (Target.Platform == UnrealTargetPlatform.Android)
+		{
+			AdditionalPropertiesForReceipt.Add("GradleDependencies", 
+				"implementation \"com.google.android.gms:play-services-auth:20.5.0\"");
+		}
 	}
 }
