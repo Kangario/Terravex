@@ -26,6 +26,10 @@
 		{
 			"Name": "OnlineSubsystemGoogle",
 			"Enabled": true
+		},
+		{
+			"Name": "GoogleCloudMessaging",
+			"Enabled": false
 		}
 	],
 	"TargetPlatforms": [

@@ -15,7 +15,8 @@ public class Terravex : ModuleRules
 			"Http", 
 			"Json", 
 			"UMG",
-			"JsonUtilities", "OnlineSubsystem"
+			"JsonUtilities", "OnlineSubsystem", 
+            "AndroidPermission" 
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
