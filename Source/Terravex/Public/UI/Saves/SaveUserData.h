@@ -22,7 +22,10 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	bool bIsFirstLaunch = true;
-	
+	UPROPERTY(BlueprintReadWrite)
+	bool bCanUpdateShop = true;
+	UPROPERTY(BlueprintReadWrite)
+	int64 LastShopUpdate = 0;
 protected:
 	UPROPERTY()
 	FTUserData UserData;
