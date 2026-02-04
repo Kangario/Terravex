@@ -1,6 +1,8 @@
 #include "UI/Controllers/ShopMenuController/ShopMenuController.h"
-
+#include "Shop/ShopShowing/ShopCardFactory.h"
 #include "TerravexInstance.h"
+#include "Shop/PurchaseHero/HeroPurchaseSubsystem.h"
+#include "Shop/ShopUpdate/ShopUpdateController.h"
 
 
 void UShopMenuController::NativeConstruct()
@@ -12,15 +14,18 @@ void UShopMenuController::NativeConstruct()
 		break; 
 	}
 	BackToMenuButton->OnClicked.AddDynamic(this, &UShopMenuController::BackToMainMenu);
-	UTerravexInstance* terravexInstance = Cast<UTerravexInstance>(GetGameInstance());
-	if (terravexInstance->canUpdate == true)
+	ButtonUpdateShop->OnClicked.AddDynamic(this, &UShopMenuController::UpdateShop);
+	CardFactory = NewObject<UShopCardFactory>(this);
+	CardFactory->Init(GetWorld());
+
+	if (auto* ShopSubsystem =
+		GetGameInstance()->GetSubsystem<UShopUpdateController>())
 	{
-		for (int i=0; i< NumberOfCards; i++)
-		{
-			UpdateShop();
-		}
+		ShopSubsystem->OnShopUpdated.AddUObject(
+			this,
+			&UShopMenuController::OnShopUpdated
+		);
 	}
-	terravexInstance->canUpdate = false;
 }
 
 void UShopMenuController::BackToMainMenu()
@@ -30,79 +35,56 @@ void UShopMenuController::BackToMainMenu()
 
 void UShopMenuController::UpdateShop()
 {
-	if (UGameplayStatics::DoesSaveGameExist(TEXT("AuthSlot"), 0))
+	UTerravexInstance* TerravexInstance = Cast<UTerravexInstance>(GetWorld()->GetGameInstance());
+	UShopUpdateController* ShopUpdateController = TerravexInstance->GetSubsystem<UShopUpdateController>();
+	ShopUpdateController->RequestUpdateShop();
+}
+
+void UShopMenuController::OnShopUpdated( TSharedPtr<FJsonObject> ShopJson)
+{
+	ScrollCards->ClearChildren(); 
+	CardFactory->BuildCards(
+	ShopJson,
+	TEXT("heroes"),
+	this,
+	this->ScrollCards,
+	this->CardWidgetClass,
+	2,
+	[this](UUserWidget* CardWidget, const TSharedPtr<FJsonObject>& Data)
 	{
-		USaveUserData* PlayerAuthData = Cast<USaveUserData>(
-			UGameplayStatics::LoadGameFromSlot(TEXT("AuthSlot"), 0)
-		);
-		if (PlayerAuthData->bCanUpdateShop)
+		if (auto* Card = Cast<UCharacterCardController>(CardWidget))
 		{
-			RequestUpdateShop();
+			Card->SetHero(Data);
+			Card->SetTextButton("Buy");
+			Card->OnCardPurchased.BindUObject(
+				this,
+				&UShopMenuController::HandleCardPurchased
+			);
 		}
-		
-	}
+	}	
+);
 }
-
-void UShopMenuController::RequestUpdateShop()
+void UShopMenuController::HandleCardPurchased(UCharacterCardController* Card)
 {
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
-
-	Request->SetURL("http://localhost:3000/CreateHero");
-	Request->SetVerb("POST");
-	Request->SetHeader("Content-Type", "application/json");
-	
-	Request->OnProcessRequestComplete().BindUObject(this, &UShopMenuController::MakeCharacter);
-
-	Request->ProcessRequest();
-}
-
-void UShopMenuController::MakeCharacter(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
-{
-	if (!bWasSuccessful || !Response.IsValid())
-	{
-		UE_LOG(LogTemp, Error, TEXT("HTTP Request failed"));
+	if (!Card)
 		return;
-	}
 
-	FString ResponseString = Response->GetContentAsString();
-	UE_LOG(LogTemp, Log, TEXT("Server response: %s"), *ResponseString);
-	
-	TSharedPtr<FJsonObject> JsonObject;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseString);
+	UHero* Hero = Card->GetHero();
 
-	if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+	if (!Hero)
+		return;
+
+	if (UWorld* World = GetWorld())
 	{
-		AddHeroToScrollView(JsonObject);
-	}
-	
-}
-
-void UShopMenuController::AddHeroToScrollView(TSharedPtr<FJsonObject> JsonObject)
-{
-	if (!JsonObject) return;
-	
-	UCharacterCardController* Card = CreateWidget<UCharacterCardController>(GetWorld(), CardWidgetClass);
-	if (!Card) return;
-
-	Card->SetHero(JsonObject);
-	
-	cardContainer.Add(Card);
-	
-	if (cardContainer.Num() >= 2)
-	{
-		UHorizontalBox* NewRow = NewObject<UHorizontalBox>(this, UHorizontalBox::StaticClass());
-		for (UCharacterCardController* C : cardContainer)
+		if (UGameInstance* GI = World->GetGameInstance())
 		{
-			UHorizontalBoxSlot* HorizontalLine = NewRow->AddChildToHorizontalBox(C);
-			if (HorizontalLine)
+			if (UHeroPurchaseSubsystem* PurchaseSubsystem =
+				GI->GetSubsystem<UHeroPurchaseSubsystem>())
 			{
-				HorizontalLine->SetPadding(FMargin(50, 0, 50, 25));
-				HorizontalLine->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+				PurchaseSubsystem->RequestPurchase(Hero);
 			}
 		}
-		
-		ScrollCards->AddChild(NewRow);
-		
-		cardContainer.Empty();
 	}
+
+	Card->RemoveFromParent();
 }

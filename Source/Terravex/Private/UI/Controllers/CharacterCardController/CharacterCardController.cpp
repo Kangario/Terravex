@@ -4,18 +4,60 @@
 #include "UI/Controllers/CharacterCardController/CharacterCardController.h"
 
 
+void UCharacterCardController::NativeConstruct()
+{
+	Super::NativeConstruct();
 
+	bUIReady = true;
+	UpdateUI();
+	
+	if (CardButton)
+	{
+		CardButton->OnClicked.AddDynamic(this, &UCharacterCardController::OnClickCardPay);
+	}
+}
 
 void UCharacterCardController::SetHero(TSharedPtr<FJsonObject> JsonObject)
 {
-	Hero = NewObject<UTHero>(this);
+	Hero = NewObject<UHero>(this);
 	Hero->LoadJsonHero(JsonObject);
+
+	bHeroReady = true;
+	UpdateUI();
+}
+
+void UCharacterCardController::UpdateUI()
+{
+	if (!bUIReady || !bHeroReady)
+		return;
+
 	SetIcoCharacter();
 	SetTitleCharacter();
 	SetDescriptionCharacterLvl();
-	SetStatCharacter();
+	SetHpCharacter();
+	SetDamageCharacter();
+	SetDefenseCharacter();
+	SetSpeedCharacter();
+	SetAttackSpeedCharacter();
 	SetCharacterXPValue();
 	SetCharacterPrice();
+}
+
+void UCharacterCardController::OnClickCardPay()
+{
+	OnCardPurchased.ExecuteIfBound(this);
+	
+	UE_LOG(LogTemp, Log, TEXT("Card clicked: %s"), *GetName());
+}
+
+void UCharacterCardController::SetTextButton(FString buttonText)
+{
+	if (buttonText.IsEmpty())
+	{
+		buttonText = "Play";
+	}
+	
+	TitleCardButton->SetText(FText::FromString(buttonText));
 }
 
 void UCharacterCardController::SetIcoCharacter()
@@ -37,20 +79,33 @@ void UCharacterCardController::SetTitleCharacter()
 
 void UCharacterCardController::SetDescriptionCharacterLvl()
 {
-	DescriptionCharacterLvl->SetText(FText::FromString("Level:" + FString::FromInt(Hero->GetLevelHero())));
+	LVLChar->SetText(FText::FromString("Level:" + FString::FromInt(Hero->GetLevelHero())));
 }
 
-void UCharacterCardController::SetStatCharacter()
+void UCharacterCardController::SetHpCharacter()
 {
-	FString CharacterDamageTemp;
-	FTypeDamage damageTypeTemp = Hero->GetDamageHero();
-	int32 healhtTemp = Hero->GetHealthHero();
-	CharacterDamageTemp =FString::Printf(
-	TEXT("Health: %d, \nDamage: Physical: %d, Magical: %d"),
-	healhtTemp,
-	damageTypeTemp.Physical,
-	damageTypeTemp.Magic);
-	DamageCharacter->SetText(FText::FromString(CharacterDamageTemp));
+	
+	HPChar->SetText(FText::FromString("Hp: " + FString::FromInt(Hero->GetHealthHero())));
+}
+
+void UCharacterCardController::SetDamageCharacter()
+{
+	DamageChar->SetText(FText::FromString("Damage: Physycal:" + FString::FromInt(Hero->GetDamageHero().Physical) + " Magical: " + FString::FromInt(Hero->GetDamageHero().Magic)));
+}
+
+void UCharacterCardController::SetDefenseCharacter()
+{
+	DefenseChar->SetText(FText::FromString("Defence: Physycal:" + FString::FromInt(Hero->GetDefenceHero().Physical) + " Magical: " + FString::FromInt(Hero->GetDefenceHero().Magic)));
+}
+
+void UCharacterCardController::SetSpeedCharacter()
+{
+	SpeedChar->SetText(FText::FromString("Speed:" + FString::FromInt(Hero->GetSpeed())));
+}
+
+void UCharacterCardController::SetAttackSpeedCharacter()
+{
+	AsChar->SetText(FText::FromString("Attack speed:" + FString::FromInt(Hero->GetAttackSpeed())));
 }
 
 void UCharacterCardController::SetCharacterXPValue()
@@ -63,4 +118,9 @@ void UCharacterCardController::SetCharacterPrice()
 	int32 price = FMath::RandRange(0, 100);
 	Hero->SetPrice(price);
 	CharacterPrice->SetText(FText::AsNumber(price));
+}
+
+UHero* UCharacterCardController::GetHero()
+{
+	return Hero;
 }

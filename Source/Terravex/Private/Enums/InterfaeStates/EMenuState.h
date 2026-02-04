@@ -8,5 +8,9 @@ enum class EMenuState : uint8
 	SignUpMenu = 2 UMETA(DisplayName = "SignUpMenu"),
 	UserProfileMenu = 3 UMETA(DisplayName = "UserProfileMenu"),
 	ShopMenu = 4 UMETA(DisplayName = "ShopMenu"),
-	BattleGroup = 5 UMETA(DisplayName = "BattleGroup")
+	BattleGroup = 5 UMETA(DisplayName = "BattleGroup"),
+	SearchBattle = 6 UMETA(DisplayName = "SearchBattle"),
+	GameHUD = 7 UMETA(DisplayName = "GameHUD"),
+	WinWindow = 8 UMETA(DisplayName = "WinWindow"),
+	LoseWindow = 9 UMETA(DisplayName = "LoseWindow"),
 };

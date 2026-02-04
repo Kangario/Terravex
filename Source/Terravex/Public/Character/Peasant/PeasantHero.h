@@ -5,7 +5,7 @@
 #include "PeasantHero.generated.h"
 
 UCLASS()
-class TERRAVEX_API UPeasantHero : public UTHero
+class TERRAVEX_API UPeasantHero : public UHero
 {
 	GENERATED_BODY()
 

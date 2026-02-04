@@ -19,7 +19,9 @@ public:
 	void SetUserData(FTUserData userData);
 	UPROPERTY(BlueprintReadWrite)
 	FString SavedToken;
-
+	UPROPERTY(BlueprintReadWrite)
+	FString UserId;
+	
 	UPROPERTY(BlueprintReadWrite)
 	bool bIsFirstLaunch = true;
 	UPROPERTY(BlueprintReadWrite)

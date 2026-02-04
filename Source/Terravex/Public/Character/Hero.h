@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Enums/HeroClasses/TypeClass.h"
-#include "AbstractClasses/BaseHero/UHero.h"
 #include "Structurs/DamageType/TypeDamage.h"
 #include "Interfaces/ISkill/ISkill.h"
 #include "Interfaces/IEquipment/IEquipment.h"
@@ -15,11 +14,11 @@
 #include "Hero.generated.h"
 
 UCLASS()
-class TERRAVEX_API UTHero : public UHero
+class TERRAVEX_API UHero : public UObject
 {
 	GENERATED_BODY()
 private:
-	int32 m_id;
+	FString m_id;
 	FString m_nameHero;
 	ETypeClass m_heroClass;
 	int32 m_health;
@@ -33,19 +32,25 @@ private:
 	int32 m_price;
 	IEquipment* m_equipment;
 	ISkill* m_skill;
+	FString m_instanceId;
 	
 public:
-	UTHero();
-	~UTHero();
-	virtual FString GetNameHero() override;
-	virtual ETypeClass GetClassHero() override;
-	virtual int32 GetLevelHero() override;
-	virtual int32 GetHealthHero() override;
-	virtual FTypeDamage GetDamageHero() override;
-	virtual int32 GetCurrentXP() override;
-	virtual int32 GetPrice() override;
-	virtual void SetPrice(int32 price) override;
-	virtual void SaveToJsonHero(int32 id,
+	UHero();
+	~UHero();
+	virtual FString GetId();
+	virtual FString GetNameHero();
+	virtual ETypeClass GetClassHero();
+	virtual int32 GetLevelHero();
+	virtual int32 GetHealthHero();
+	virtual FTypeDamage GetDamageHero();
+	virtual FTypeProtection GetDefenceHero();
+	virtual int32 GetSpeed();
+	virtual int32 GetAttackSpeed();
+	virtual int32 GetCurrentXP();
+	virtual int32 GetPrice();
+	virtual FString GetInstanceId();
+	virtual void SetPrice(int32 price);
+	virtual void SaveToJsonHero(FString id,
 	FString nameHero,
 	ETypeClass heroClass,
 	int32 health,
@@ -55,7 +60,8 @@ public:
 	int32 attackSpeed,
 	int32 level,
 	int32 currentXP,
-	int32 maxXP) override;
-	virtual  void LoadJsonHero(int32 id) override;
-	virtual void LoadJsonHero(TSharedPtr<FJsonObject> JsonObject) override;
+	int32 maxXP,
+	FString instanceId);
+	virtual  void LoadJsonHero(FString id);
+	virtual void LoadJsonHero(TSharedPtr<FJsonObject> JsonObject);
 };

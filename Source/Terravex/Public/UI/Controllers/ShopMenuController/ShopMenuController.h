@@ -4,20 +4,13 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
 #include "UI/InterfaceState.h"
-#include "EngineUtils.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "HttpModule.h"
-#include "Interfaces/IHttpRequest.h"
-#include "Interfaces/IHttpResponse.h"
-#include "Json.h"
-#include "Kismet/GameplayStatics.h"
-#include "UI/Saves/SaveUserData.h"
 #include "Components/ScrollBox.h"
 #include "UI/Controllers/CharacterCardController/CharacterCardController.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "ShopMenuController.generated.h"
 
+class UShopCardFactory;
 
 UCLASS()
 class TERRAVEX_API UShopMenuController : public UUserWidget
@@ -30,24 +23,25 @@ public:
 	void BackToMainMenu();
 	UFUNCTION()
 	void UpdateShop();
+	void OnShopUpdated(TSharedPtr<FJsonObject> ShopJson);
 	UFUNCTION()
-	void RequestUpdateShop();
-	void AddHeroToScrollView(TSharedPtr<FJsonObject> JsonObject);
-	void MakeCharacter(TSharedPtr<IHttpRequest> request, TSharedPtr<IHttpResponse> response, bool bWasSucceful);
-public:	
-	UPROPERTY(EditDefaultsOnly)
-	int32 NumberOfCards = 12;
+	void HandleCardPurchased(UCharacterCardController* Card);
+public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	AInterfaceState* InterfaceState;
 	UPROPERTY(EditDefaultsOnly, Category = "Shop")
 	TSubclassOf<UUserWidget> CardWidgetClass;
+	UPROPERTY(meta = (BindWidget))
+	class UScrollBox* ScrollCards;
 protected:
+	UPROPERTY()
+	UShopCardFactory* CardFactory;
 	UPROPERTY()
 	TArray<UCharacterCardController*> cardContainer;
 	UPROPERTY(meta = (BindWidget))
 	UButton* BackToMenuButton;
 	UPROPERTY(meta = (BindWidget))
-	class UScrollBox* ScrollCards;
+	UButton* ButtonUpdateShop;
 	UPROPERTY()
 	int64 LastShopUpdate;
 };

@@ -1,34 +1,41 @@
 using UnrealBuildTool;
+using System.IO;
 
 public class Terravex : ModuleRules
 {
 	public Terravex(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-	
-		PublicDependencyModuleNames.AddRange(new string[] { 
-			"Core", 
-			"CoreUObject", 
-			"Engine", 
-			"InputCore", 
-			"EnhancedInput", 
-			"Http", 
-			"Json", 
+
+		PublicDependencyModuleNames.AddRange(new string[]
+		{
+			"Core",
+			"CoreUObject",
+			"Engine",
+			"InputCore",
+			"EnhancedInput",
+			"HTTP",
+			"Json",
+			"JsonUtilities",
 			"UMG",
-			"JsonUtilities", "OnlineSubsystem", 
-            "AndroidPermission" 
+			"AndroidPermission", 
+			"OnlineSubsystem",
+			"WebSockets",
+			"ProceduralMeshComponent"
+		});
+		
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"WebBrowser",
+			"Slate",
+			"SlateCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"OnlineSubsystem", 
+			"OnlineSubsystem",
 			"OnlineSubsystemUtils"
 		});
-		
-		if (Target.Platform == UnrealTargetPlatform.Android)
-		{
-			AdditionalPropertiesForReceipt.Add("GradleDependencies", 
-				"implementation \"com.google.android.gms:play-services-auth:20.5.0\"");
-		}
+	
 	}
 }

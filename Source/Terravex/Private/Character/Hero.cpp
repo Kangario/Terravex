@@ -5,14 +5,14 @@
 
 #include <string>
 
-UTHero::UTHero()
+UHero::UHero()
 {
 }
 
-UTHero::~UTHero()
+UHero::~UHero()
 {
 }
-void UTHero::SaveToJsonHero(int32 id,
+void UHero::SaveToJsonHero(FString id,
 	FString nameHero,
 	ETypeClass heroClass,
 	int32 health,
@@ -22,11 +22,12 @@ void UTHero::SaveToJsonHero(int32 id,
 	int32 attackSpeed,
 	int32 level,
 	int32 currentXP,
-	int32 maxXP)
+	int32 maxXP,
+	FString instanceId)
 {
 	TSharedPtr<FJsonObject> HeroObject = MakeShared<FJsonObject>();
 	
-	HeroObject->SetNumberField("Id", id);
+	HeroObject->SetStringField("Id", id);
 	HeroObject->SetStringField("Name", nameHero);
 	HeroObject->SetNumberField("Class", static_cast<uint8>(heroClass));
 	HeroObject->SetNumberField("Health", health);
@@ -39,17 +40,18 @@ void UTHero::SaveToJsonHero(int32 id,
 	HeroObject->SetNumberField("Level", level);
 	HeroObject->SetNumberField("CurrentXP", currentXP);
 	HeroObject->SetNumberField("MaxXP", maxXP);
+	HeroObject->SetStringField("InstanceId", instanceId);
 	FString outputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&outputString);
 	FJsonSerializer::Serialize(HeroObject.ToSharedRef(), Writer);
-	const FString FilePath = FPaths::ProjectSavedDir() +TEXT("Heros/")+ FString::FromInt(id) + TEXT(".json");
+	const FString FilePath = FPaths::ProjectSavedDir() +TEXT("Heros/")+ id + TEXT(".json");
 	
 	FFileHelper::SaveStringToFile(outputString, *FilePath);
 }
 
-void UTHero::LoadJsonHero(int32 id)
+void UHero::LoadJsonHero(FString id)
 {
-	const FString FilePath = FPaths::ProjectSavedDir() +TEXT("Heros/")+ FString::FromInt(id) + TEXT(".json");
+	const FString FilePath = FPaths::ProjectSavedDir() +TEXT("Heros/")+ id + TEXT(".json");
 
 	FString JsonString;
 	if (!FFileHelper::LoadFileToString(JsonString, *FilePath))
@@ -67,7 +69,7 @@ void UTHero::LoadJsonHero(int32 id)
 		return;
 	}
 
-	m_id = JsonObject->GetIntegerField(TEXT("Id"));
+	m_id = JsonObject->GetStringField(TEXT("Id"));
 	m_nameHero = JsonObject->GetStringField(TEXT("Name"));
 	m_heroClass = static_cast<ETypeClass>(JsonObject->GetNumberField(TEXT("Class")));
 	m_health = JsonObject->GetNumberField(TEXT("Health"));
@@ -80,59 +82,79 @@ void UTHero::LoadJsonHero(int32 id)
 	m_Level = JsonObject->GetNumberField(TEXT("Level"));
 	m_currentXP = JsonObject->GetNumberField(TEXT("CurrentXP"));
 	m_maxXP = JsonObject->GetNumberField(TEXT("MaxXP"));
-	
-	UE_LOG(LogTemp, Log, TEXT("ID: %d | Loaded: %s | Level: %d | HP: %d"), m_id , *m_nameHero, m_Level, m_health);
+	m_instanceId = JsonObject->GetStringField(TEXT("InstanceId"));
+	UE_LOG(LogTemp, Log, TEXT("ID: %s | Loaded: %s | Level: %d | HP: %d"), *m_id , *m_nameHero, m_Level, m_health);
 }
 
-void UTHero::LoadJsonHero(TSharedPtr<FJsonObject> JsonObject)
+void UHero::LoadJsonHero(TSharedPtr<FJsonObject> JsonObject)
+{//"Name":"Hero_0","TypeClass":2,"Hp":136,"DamageP":29,"DamageM":17,"DefenceP":6,"DefenceM":32,"Speed":95,"AttackSpeed":35,"Lvl":1,"Xp":0}
+	m_id = JsonObject->GetStringField(TEXT("Id"));
+	m_nameHero = JsonObject->GetStringField(TEXT("Name"));
+	m_heroClass = static_cast<ETypeClass>(JsonObject->GetNumberField(TEXT("TypeClass")));
+	m_health = JsonObject->GetNumberField(TEXT("Hp"));
+	m_damage.Physical = JsonObject->GetNumberField(TEXT("DamageP"));
+	m_damage.Magic = JsonObject->GetNumberField(TEXT("DamageM"));
+	m_protection.Physical = JsonObject->GetNumberField(TEXT("DefenceP"));
+	m_protection.Magic = JsonObject->GetNumberField(TEXT("DefenceM"));
+	m_speed = JsonObject->GetNumberField(TEXT("Speed"));
+	m_attackSpeed = JsonObject->GetNumberField(TEXT("AttackSpeed"));
+	m_Level = JsonObject->GetNumberField(TEXT("Lvl"));
+	m_currentXP = JsonObject->GetNumberField(TEXT("Xp"));
+	m_instanceId = JsonObject->GetStringField(TEXT("InstanceId"));
+	UE_LOG(LogTemp, Log, TEXT("ID: %s | Loaded: %s | Level: %d | HP: %d"), *m_id , *m_nameHero, m_Level, m_health);
+}
+
+FString UHero::GetId()
 {
-	m_id = JsonObject->GetIntegerField(TEXT("Id"));
-	m_nameHero = JsonObject->GetStringField(TEXT("Name"));
-	m_heroClass = static_cast<ETypeClass>(JsonObject->GetNumberField(TEXT("Class")));
-	m_health = JsonObject->GetNumberField(TEXT("Health"));
-	m_damage.Physical = JsonObject->GetNumberField(TEXT("DamagePhysical"));
-	m_damage.Magic = JsonObject->GetNumberField(TEXT("DamageMagic"));
-	m_protection.Physical = JsonObject->GetNumberField(TEXT("ProtectionPhysical"));
-	m_protection.Magic = JsonObject->GetNumberField(TEXT("ProtectionMagic"));
-	m_speed = JsonObject->GetNumberField(TEXT("Speed"));
-	m_attackSpeed = JsonObject->GetNumberField(TEXT("AttackSpeed"));
-	m_Level = JsonObject->GetNumberField(TEXT("Level"));
-	m_currentXP = JsonObject->GetNumberField(TEXT("CurrentXP"));
-	m_maxXP = JsonObject->GetNumberField(TEXT("MaxXP"));
-	
-	UE_LOG(LogTemp, Log, TEXT("ID: %d | Loaded: %s | Level: %d | HP: %d"), m_id , *m_nameHero, m_Level, m_health);
+	return m_id;
 }
 
-ETypeClass UTHero::GetClassHero()
+ETypeClass UHero::GetClassHero()
 {
 	return m_heroClass;
 }
-int32 UTHero::GetLevelHero()
+int32 UHero::GetLevelHero()
 {
 	return m_Level;
 }
-int32 UTHero::GetHealthHero()
+int32 UHero::GetHealthHero()
 {
 	return m_health;
 }
-FTypeDamage UTHero::GetDamageHero()
+FTypeDamage UHero::GetDamageHero()
 {
 	return m_damage;
 }
-FString UTHero::GetNameHero()
+FTypeProtection UHero::GetDefenceHero()
+{
+	return m_protection;
+}
+int32 UHero::GetSpeed()
+{
+	return m_speed;
+}
+int32 UHero::GetAttackSpeed()
+{
+	return m_attackSpeed;
+}
+FString UHero::GetNameHero()
 {
 	return m_nameHero;
 }
-int32 UTHero::GetCurrentXP()
+int32 UHero::GetCurrentXP()
 {
 	return m_currentXP;
 }
 
-int32 UTHero::GetPrice()
+int32 UHero::GetPrice()
 {
 	return m_price;
 }
-void UTHero::SetPrice(int32 price)
+FString UHero::GetInstanceId()
+{
+	return m_instanceId;
+}
+void UHero::SetPrice(int32 price)
 {
 	m_price = price;
 }
