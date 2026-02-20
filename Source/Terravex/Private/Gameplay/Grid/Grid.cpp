@@ -1,5 +1,5 @@
 #include "Gameplay/Grid/Grid.h"
-
+#include "Components/StaticMeshComponent.h"
 #include "Gameplay/Character/PlayerCharacter.h"
 
 
@@ -15,7 +15,7 @@ void UGrid::Init(
 	GridHeight = Height;
 	CellSize = 100.f;
 	Origin = InOrigin;
-	CachedWorld = TerrainMesh->GetWorld();
+	CachedWorld = TerrainMesh ? TerrainMesh->GetWorld() : nullptr;
 	
 	Grid.SetNum(GridWidth * GridHeight);
 
@@ -126,7 +126,10 @@ void UGrid::ClearCells()
 		Cell.bDeploymentAllowed = false;
 		Cell.bHighlighted = false;
 	}
-	HighlighterActor->SetActorHiddenInGame(true);
+	if (IsValid(HighlighterActor))
+	{
+		HighlighterActor->SetActorHiddenInGame(true);
+	}
 }
 
 void UGrid::CellIllumination(
@@ -184,24 +187,25 @@ void UGrid::CellIllumination(
 	UE_LOG(LogTemp, Log, TEXT("[Grid] Cells illumination applied"));
 
 	// 3️⃣ Highlighter
-	if (!HighlighterActor)
+	if (!IsValid(HighlighterActor))
 	{
 		UE_LOG(LogTemp, Log, TEXT("[Grid] HighlighterActor not found, spawning"));
 		SpawnHighlighter();
 	}
 
 	// 4️⃣ Поворот по команде
-	if (HighlighterActor)
+	if (IsValid(HighlighterActor))
 	{
 		UStaticMeshComponent* HighlighterMesh =
-	Cast<UStaticMeshComponent>(
-		HighlighterActor->GetDefaultSubobjectByName(TEXT("HighlighterMesh"))
-	);
+			HighlighterActor->FindComponentByClass<UStaticMeshComponent>();
 		const float Yaw = GetRotationByTeam(teamId);
 		if (HighlighterMesh)
 		{
 			UE_LOG(LogTemp, Log, TEXT("[Grid] HighlighterMesh == true"));
 			HighlighterMesh->SetWorldRotation(FRotator(0.f, Yaw, 0.f));
+		}else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Grid] Highlighter mesh component is missing"));
 		}
 		UE_LOG(LogTemp, Log,
 			TEXT("[Grid] Highlighter rotated | Yaw=%.1f"),
@@ -231,7 +235,7 @@ void UGrid::SpawnHighlighter()
 		return;
 	}
 
-	if (HighlighterActor)
+	if (IsValid(HighlighterActor))
 	{
 		UE_LOG(LogTemp, Log, TEXT("[Grid] Destroying existing HighlighterActor"));
 		HighlighterActor->Destroy();
