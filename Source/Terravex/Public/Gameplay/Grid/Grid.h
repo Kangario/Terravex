@@ -28,13 +28,20 @@ public:
 	FIntPoint WorldToGrid(const FVector& WorldLocation) const;
 	int32 GetIndexGrid(int32 X, int32 Y) const;
 	int32 GetIndexGrid(const FIntPoint& cell) const;
+	FGridCell& GetCellByCoord(const FIntPoint& cell);
 	FIntPoint GetCoordGrid(int32 Index);
 	bool IsCellWalkable(const FIntPoint& Cell) const;
 	bool IsValidCell(const FIntPoint& Cell) const;
 	
+	void ClearCells();
 	void CellIllumination(const FDeployData& DeploymentData,TSubclassOf<AActor> higliter, int32 teamId);
+	
+	void UpdateAllWalkableCells(bool canMove);
 	void SpawnHighlighter();
-	float GetRotationByTeam(int32 teamId) const;
+	float GetRotationByTeam(int32 teamId);
+	float Normalize360(float Angle);
+	bool TryMoveUnit(APlayerCharacter* Unit, const FIntPoint& TargetCell);
+	void ForceMoveUnit(APlayerCharacter* Unit, const FIntPoint& TargetCell);
 	
 	
 	UPROPERTY(EditAnywhere, Category="Deployment")
@@ -46,11 +53,16 @@ public:
 	UWorld* CachedWorld;
 	UPROPERTY()
 	UTerrainGenerator* TerrainGenerator;
-	
+	UPROPERTY()
 	TArray<FGridCell> Grid;
+	UPROPERTY()
 	int32 GridWidth;
+	UPROPERTY()
 	int32 GridHeight;
+	UPROPERTY()
 	float CellSize;
+	UPROPERTY()
 	int32 Scale = 100;
+	UPROPERTY()
 	FVector Origin;
 };

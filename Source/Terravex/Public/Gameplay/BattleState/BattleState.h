@@ -28,13 +28,13 @@ public:
 	UPROPERTY()
 	int32 turnNumber;
 	UPROPERTY()
-	int64  activeUnitId;
+	FString  activeUnitId;
 	//Characters
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TArray<FUnitState> Units;
 	
 	UPROPERTY()
-	TArray<int32> InitiativeOrder;
+	TArray<FString> InitiativeOrder;
 	
 	UPROPERTY()
 	bool finished;

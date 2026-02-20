@@ -10,31 +10,31 @@ USTRUCT()
 struct FUnitState
 {
 	GENERATED_BODY()
-	UPROPERTY()
-	int32 id;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
+	FString id;
+	UPROPERTY(VisibleAnywhere)
 	int32 team;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	FString templateId;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	FString ownerId;
 	
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	FString name;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	ETypeClass classHero;
 	
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	int32 hp;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	int32 maxHp;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	int32 ap;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	int32 initiative;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	int32 damageP;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	int32 damageM;
 	UPROPERTY()
 	int32 defenceP;
@@ -46,8 +46,8 @@ struct FUnitState
 	int32 attackSpeed;
 	UPROPERTY()
 	int32 level;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	int32 x;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	int32 y;
 };

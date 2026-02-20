@@ -1,6 +1,7 @@
 ﻿#pragma once
-
 #include "GridCell.generated.h"
+
+class APlayerCharacter;
 
 USTRUCT()
 struct FGridCell
@@ -21,5 +22,8 @@ struct FGridCell
 	bool bDeploymentAllowed = false; 
 	UPROPERTY()
 	bool bHighlighted = false;
+	
+	UPROPERTY()
+	FString characterId;
 	
 };

@@ -1,5 +1,7 @@
 #include "Gameplay/Grid/Grid.h"
 
+#include "Gameplay/Character/PlayerCharacter.h"
+
 
 void UGrid::Init(
 	int32 Width,
@@ -76,6 +78,13 @@ int32 UGrid::GetIndexGrid(const FIntPoint& cell) const
 	return cell.Y * GridWidth + cell.X;
 }
 
+FGridCell& UGrid::GetCellByCoord(const FIntPoint& cell)
+{
+	int32 index = cell.Y * GridWidth + cell.X;
+	check(Grid.IsValidIndex(index));
+	return Grid[index];
+}
+
 FIntPoint UGrid::GetCoordGrid(int32 Index)
 {
 	int32 X = Index % GridWidth;
@@ -99,6 +108,25 @@ bool UGrid::IsCellWalkable(const FIntPoint& Cell) const
 
 	const int32 Index = GetIndexGrid(Cell);
 	return Grid[Index].bWalkable;
+}
+
+void UGrid::UpdateAllWalkableCells(bool canMove)
+{
+	for (FGridCell& Cell : Grid)
+	{
+		Cell.bWalkable = canMove;
+	}
+	
+}
+
+void UGrid::ClearCells()
+{
+	for (FGridCell& Cell : Grid)
+	{
+		Cell.bDeploymentAllowed = false;
+		Cell.bHighlighted = false;
+	}
+	HighlighterActor->SetActorHiddenInGame(true);
 }
 
 void UGrid::CellIllumination(
@@ -165,9 +193,16 @@ void UGrid::CellIllumination(
 	// 4️⃣ Поворот по команде
 	if (HighlighterActor)
 	{
+		UStaticMeshComponent* HighlighterMesh =
+	Cast<UStaticMeshComponent>(
+		HighlighterActor->GetDefaultSubobjectByName(TEXT("HighlighterMesh"))
+	);
 		const float Yaw = GetRotationByTeam(teamId);
-		HighlighterActor->SetActorRotation(FRotator(0.f, Yaw, 0.f));
-
+		if (HighlighterMesh)
+		{
+			UE_LOG(LogTemp, Log, TEXT("[Grid] HighlighterMesh == true"));
+			HighlighterMesh->SetWorldRotation(FRotator(0.f, Yaw, 0.f));
+		}
 		UE_LOG(LogTemp, Log,
 			TEXT("[Grid] Highlighter rotated | Yaw=%.1f"),
 			Yaw
@@ -178,7 +213,6 @@ void UGrid::CellIllumination(
 		UE_LOG(LogTemp, Error, TEXT("[Grid] HighlighterActor is NULL after spawn"));
 	}
 }
-
 
 
 void UGrid::SpawnHighlighter()
@@ -205,7 +239,8 @@ void UGrid::SpawnHighlighter()
 	}
 
 	FTransform SpawnTransform;
-	SpawnTransform.SetLocation(Origin);
+	FVector offset = FVector((15*CellSize)/2,(40*CellSize)/2,20);
+	SpawnTransform.SetLocation(Origin + offset);
 	SpawnTransform.SetRotation(FQuat::Identity);
 
 	HighlighterActor = CachedWorld->SpawnActor<AActor>(
@@ -227,9 +262,9 @@ void UGrid::SpawnHighlighter()
 }
 
 
-float UGrid::GetRotationByTeam(int32 teamId) const
+float UGrid::GetRotationByTeam(int32 teamId)
 {
-	float Rotation = 0.f;
+	float Rotation = 0;
 
 	if (teamId == 1)
 	{
@@ -237,4 +272,48 @@ float UGrid::GetRotationByTeam(int32 teamId) const
 	}
 
 	return Rotation;
+}
+
+bool UGrid::TryMoveUnit(APlayerCharacter* Unit, const FIntPoint& TargetCell)
+{
+	if (!IsValidCell(TargetCell))
+		return false;
+
+	FGridCell& NewCell = GetCellByCoord(TargetCell);
+
+	if (!NewCell.bWalkable)
+		return false;
+
+	if (!NewCell.characterId.IsEmpty())
+		return false;
+
+	// освобождаем старую клетку
+	FGridCell& OldCell = GetCellByCoord(Unit->CurrentCellCoord);
+	OldCell.characterId.Empty();
+
+	// занимаем новую
+	NewCell.characterId = Unit->UnitState.id;
+
+	Unit->CurrentCellCoord = TargetCell;
+
+	return true;
+}
+
+void UGrid::ForceMoveUnit(APlayerCharacter* Unit, const FIntPoint& TargetCell)
+{
+	if (!Unit)
+		return;
+
+	if (!IsValidCell(TargetCell))
+		return;
+
+	// освободить старую клетку
+	FGridCell& OldCell = GetCellByCoord(Unit->CurrentCellCoord);
+	OldCell.characterId.Empty();
+
+	// занять новую
+	FGridCell& NewCell = GetCellByCoord(TargetCell);
+	NewCell.characterId = Unit->UnitState.id;
+
+	Unit->CurrentCellCoord = TargetCell;
 }
