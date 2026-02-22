@@ -15,8 +15,6 @@ void UGrid::Init(
 	GridHeight = Height;
 	CellSize = 100.f;
 	Origin = InOrigin;
-	CachedWorld = TerrainMesh ? TerrainMesh->GetWorld() : nullptr;
-	
 	Grid.SetNum(GridWidth * GridHeight);
 
 	for (int32 y = 0; y < GridHeight; y++)
@@ -43,6 +41,11 @@ void UGrid::Init(
 		CellSize,
 		TerrainMesh
 	);
+}
+
+UProceduralMeshComponent* UGrid::GetGridMesh()
+{
+	return TerrainGenerator->GetTerrainMesh();
 }
 
 FVector UGrid::GridToWorld(int32 X, int32 Y, float ZOffset) 
@@ -133,9 +136,7 @@ void UGrid::ClearCells()
 }
 
 void UGrid::CellIllumination(
-	const FDeployData& DeploymentData,
-	TSubclassOf<AActor> Highlighter,
-	int32 teamId
+	const FDeployData& DeploymentData
 )
 {
 	UE_LOG(LogTemp, Log,
@@ -144,27 +145,13 @@ void UGrid::CellIllumination(
 		DeploymentData.AllowedRows.Num()
 	);
 
-	HighlighterClass = Highlighter;
-
-	if (!CachedWorld)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Grid] CachedWorld is NULL"));
-		return;
-	}
-
-	if (!HighlighterClass)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Grid] HighlighterClass is NULL"));
-	}
-
 	// 1️⃣ Сброс состояния клеток
 	for (FGridCell& Cell : Grid)
 	{
 		Cell.bDeploymentAllowed = false;
-		Cell.bHighlighted = false;
 	}
 
-	// 2️⃣ Ограничиваем по рядам
+	// 2️⃣ Разрешаем клетки по AllowedRows
 	for (int32 Row : DeploymentData.AllowedRows)
 	{
 		if (Row < 0 || Row >= GridHeight)
@@ -179,103 +166,15 @@ void UGrid::CellIllumination(
 		for (int32 X = 0; X < GridWidth; ++X)
 		{
 			const int32 Index = GetIndexGrid(X, Row);
-			Grid[Index].bDeploymentAllowed = true;
-			Grid[Index].bHighlighted = true;
+
+			if (Grid.IsValidIndex(Index))
+			{
+				Grid[Index].bDeploymentAllowed = true;
+			}
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("[Grid] Cells illumination applied"));
-
-	// 3️⃣ Highlighter
-	if (!IsValid(HighlighterActor))
-	{
-		UE_LOG(LogTemp, Log, TEXT("[Grid] HighlighterActor not found, spawning"));
-		SpawnHighlighter();
-	}
-
-	// 4️⃣ Поворот по команде
-	if (IsValid(HighlighterActor))
-	{
-		UStaticMeshComponent* HighlighterMesh =
-			HighlighterActor->FindComponentByClass<UStaticMeshComponent>();
-		const float Yaw = GetRotationByTeam(teamId);
-		if (HighlighterMesh)
-		{
-			UE_LOG(LogTemp, Log, TEXT("[Grid] HighlighterMesh == true"));
-			HighlighterMesh->SetWorldRotation(FRotator(0.f, Yaw, 0.f));
-		}else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[Grid] Highlighter mesh component is missing"));
-		}
-		UE_LOG(LogTemp, Log,
-			TEXT("[Grid] Highlighter rotated | Yaw=%.1f"),
-			Yaw
-		);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Grid] HighlighterActor is NULL after spawn"));
-	}
-}
-
-
-void UGrid::SpawnHighlighter()
-{
-	UE_LOG(LogTemp, Log, TEXT("[Grid] SpawnHighlighter called"));
-
-	if (!CachedWorld)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Grid] Cannot spawn Highlighter: CachedWorld is NULL"));
-		return;
-	}
-
-	if (!HighlighterClass)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Grid] Cannot spawn Highlighter: HighlighterClass is NULL"));
-		return;
-	}
-
-	if (IsValid(HighlighterActor))
-	{
-		UE_LOG(LogTemp, Log, TEXT("[Grid] Destroying existing HighlighterActor"));
-		HighlighterActor->Destroy();
-		HighlighterActor = nullptr;
-	}
-
-	FTransform SpawnTransform;
-	FVector offset = FVector((15*CellSize)/2,(40*CellSize)/2,20);
-	SpawnTransform.SetLocation(Origin + offset);
-	SpawnTransform.SetRotation(FQuat::Identity);
-
-	HighlighterActor = CachedWorld->SpawnActor<AActor>(
-		HighlighterClass,
-		SpawnTransform
-	);
-
-	if (!HighlighterActor)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Grid] Failed to spawn HighlighterActor"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log,
-			TEXT("[Grid] HighlighterActor spawned successfully at %s"),
-			*Origin.ToString()
-		);
-	}
-}
-
-
-float UGrid::GetRotationByTeam(int32 teamId)
-{
-	float Rotation = 0;
-
-	if (teamId == 1)
-	{
-		Rotation = 180.f;
-	}
-
-	return Rotation;
+	UE_LOG(LogTemp, Log, TEXT("[Grid] Deployment rows applied"));
 }
 
 bool UGrid::TryMoveUnit(APlayerCharacter* Unit, const FIntPoint& TargetCell)

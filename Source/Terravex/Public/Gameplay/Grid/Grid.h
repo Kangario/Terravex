@@ -30,15 +30,14 @@ public:
 	int32 GetIndexGrid(const FIntPoint& cell) const;
 	FGridCell& GetCellByCoord(const FIntPoint& cell);
 	FIntPoint GetCoordGrid(int32 Index);
+	UProceduralMeshComponent* GetGridMesh();
 	bool IsCellWalkable(const FIntPoint& Cell) const;
 	bool IsValidCell(const FIntPoint& Cell) const;
 	
 	void ClearCells();
-	void CellIllumination(const FDeployData& DeploymentData,TSubclassOf<AActor> higliter, int32 teamId);
+	void CellIllumination(const FDeployData& DeploymentData);
 	
 	void UpdateAllWalkableCells(bool canMove);
-	void SpawnHighlighter();
-	float GetRotationByTeam(int32 teamId);
 	float Normalize360(float Angle);
 	bool TryMoveUnit(APlayerCharacter* Unit, const FIntPoint& TargetCell);
 	void ForceMoveUnit(APlayerCharacter* Unit, const FIntPoint& TargetCell);
@@ -49,8 +48,6 @@ public:
 
 	UPROPERTY()
 	AActor* HighlighterActor;
-	UPROPERTY()
-	UWorld* CachedWorld;
 	UPROPERTY()
 	UTerrainGenerator* TerrainGenerator;
 	UPROPERTY()
